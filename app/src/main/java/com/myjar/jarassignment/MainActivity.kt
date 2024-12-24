@@ -2,6 +2,9 @@ package com.myjar.jarassignment
 
 import android.content.Intent
 import android.os.Bundle
+import android.text.Editable
+import android.text.TextWatcher
+import android.widget.EditText
 import androidx.activity.ComponentActivity
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
@@ -22,14 +25,28 @@ class MainActivity : ComponentActivity() {
 
     private val viewModel by viewModels<JarViewModel>()
     private lateinit var adapter: ListAdapter<ComputerItem, *>
+    private lateinit var editText: EditText
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContentView(R.layout.activity_main)
+        editText = findViewById(R.id.searchItem)
 
         setupUi()
         observeFlows()
+
+        editText.addTextChangedListener(object : TextWatcher{
+
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
+                adapter.submitList(viewModel.performSearch(s.toString()))
+            }
+
+            override fun afterTextChanged(s: Editable?) {}
+
+        })
     }
 
     private fun observeFlows() {
@@ -40,13 +57,11 @@ class MainActivity : ComponentActivity() {
         }
 
         lifecycleScope.launch {
-            repeatOnLifecycle(Lifecycle.State.RESUMED) {
                 viewModel.navigateToItem.filterNotNull().collectLatest {
                     val intent = Intent(this@MainActivity, DetailActivity::class.java)
                     intent.putExtra("itemId", it)
                     startActivity(intent)
                 }
-            }
         }
     }
 
@@ -55,7 +70,7 @@ class MainActivity : ComponentActivity() {
         adapter = ItemAdapter { selectedItem ->
             viewModel.navigateToItemDetail(selectedItem.id)
         }
-
+        recyclerView.adapter = adapter
         recyclerView.layoutManager = LinearLayoutManager(this)
     }
 

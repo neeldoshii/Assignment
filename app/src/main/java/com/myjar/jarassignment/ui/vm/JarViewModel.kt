@@ -16,6 +16,12 @@ class JarViewModel : ViewModel() {
     val listStringData: StateFlow<List<ComputerItem>>
         get() = _listStringData
 
+    private val _filterText = MutableStateFlow<List<ComputerItem>>(emptyList())
+    val filterText: StateFlow<List<ComputerItem>>
+        get() = _filterText
+
+
+
     private val _navigateToItem = MutableStateFlow<String?>(null)
     val navigateToItem: StateFlow<String?>
         get() = _navigateToItem
@@ -24,8 +30,22 @@ class JarViewModel : ViewModel() {
 
     fun fetchData() {
         viewModelScope.launch {
-            repository.fetchResults()
+            repository.fetchResults().collect{
+                println(it)
+                _listStringData.value = it
+            }
         }
+    }
+
+    fun performSearch(text : String) : List<ComputerItem>{
+
+        val filterText = _listStringData.value.filter {
+            it.name.contains(text)
+        }
+
+        return  filterText
+
+
     }
 
     fun navigateToItemDetail(id: String) {
